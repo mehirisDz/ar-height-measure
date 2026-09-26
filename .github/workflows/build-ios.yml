@@ -30,6 +30,10 @@ jobs:
           SCHEME=$(basename $(ls | grep \.xcodeproj | head -1) .xcodeproj)
           echo "Building workspace $WORKSPACE with scheme $SCHEME"
           
+          # List schemes to verify it exists
+          xcodebuild -workspace "$WORKSPACE" -list
+          
+          # Run the build
           xcodebuild -workspace "$WORKSPACE" \
                      -scheme "$SCHEME" \
                      -configuration Release \
@@ -38,11 +42,18 @@ jobs:
                      CODE_SIGN_IDENTITY="" \
                      CODE_SIGNING_REQUIRED=NO \
                      CODE_SIGNING_ALLOWED=NO \
-                     build
+                     build || { echo 'xcodebuild failed'; exit 1; }
           
           cd ..
           mkdir -p Payload
-          mv ios/build/Build/Products/Release-iphoneos/*.app Payload/
+          # Find the generated .app file (the path can vary slightly)
+          APP_PATH=$(find ios/build -name "*.app" -type d | head -1)
+          if [ -z "$APP_PATH" ]; then
+            echo "Could not find .app file in build directory"
+            exit 1
+          fi
+          
+          mv "$APP_PATH" Payload/
           zip -r ar-height-measure.ipa Payload
 
       - name: Upload IPA
