@@ -12,12 +12,14 @@
     "ios": {
       "supportsTablet": false,
       "bundleIdentifier": "com.example.arheightmeasure",
-      "deploymentTarget": "16.0",
+      "deploymentTarget": "16.4",
       "infoPlist": {
         "NSCameraUsageDescription": "This app uses the camera together with ARKit to track the phone's position in 3D space and measure its height above the floor. No photos or video are recorded or stored.",
         "UIRequiredDeviceCapabilities": [
+          "arkit",
           "arkit"
-        ]
+        ],
+        "ITSAppUsesNonExemptEncryption": false
       }
     },
     "plugins": [
