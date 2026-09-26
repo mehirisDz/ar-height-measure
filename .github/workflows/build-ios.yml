@@ -2,7 +2,7 @@ name: Build iOS IPA
 
 on:
   push:
-    branches: [ "master", "main" ]
+    branches: ["master", "main"]
   workflow_dispatch:
 
 jobs:
@@ -15,51 +15,63 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 24
 
-      - name: Install dependencies
-        run: npm install
+      - name: Install JS dependencies
+        run: npm install --legacy-peer-deps
 
-      - name: Run Expo Prebuild
-        run: npx expo prebuild --platform ios
+      - name: Run Expo Prebuild (generates ios/ project + Info.plist)
+        run: npx expo prebuild --platform ios --no-install
+
+      - name: Install CocoaPods dependencies
+        run: |
+          cd ios
+          pod install --repo-update
+
+      - name: Verify camera permission is in Info.plist
+        run: |
+          PLIST=$(find ios -name "Info.plist" | grep -v Pods | grep -v build | head -1)
+          echo "Checking $PLIST"
+          if /usr/libexec/PlistBuddy -c "Print NSCameraUsageDescription" "$PLIST" 2>/dev/null; then
+            echo "✅ NSCameraUsageDescription found"
+          else
+            echo "❌ NSCameraUsageDescription MISSING — aborting"
+            cat "$PLIST"
+            exit 1
+          fi
 
       - name: Build unsigned IPA
         run: |
           cd ios
-          # Ensure CocoaPods generates the .xcworkspace
-          pod install
-          
           WORKSPACE=$(ls | grep \.xcworkspace | head -1)
           SCHEME=$(basename $(ls | grep \.xcodeproj | head -1) .xcodeproj)
-          echo "Building workspace $WORKSPACE with scheme $SCHEME"
-          
-          # List schemes to verify it exists
-          xcodebuild -workspace "$WORKSPACE" -list
-          
-          # Run the build
-          xcodebuild -workspace "$WORKSPACE" \
-                     -scheme "$SCHEME" \
-                     -configuration Release \
-                     -sdk iphoneos \
-                     -derivedDataPath build \
-                     CODE_SIGN_IDENTITY="" \
-                     CODE_SIGNING_REQUIRED=NO \
-                     CODE_SIGNING_ALLOWED=NO \
-                     build || { echo 'xcodebuild failed'; exit 1; }
-          
+          echo "Workspace: $WORKSPACE  Scheme: $SCHEME"
+
+          xcodebuild \
+            -workspace "$WORKSPACE" \
+            -scheme "$SCHEME" \
+            -configuration Release \
+            -sdk iphoneos \
+            -derivedDataPath build \
+            CODE_SIGN_IDENTITY="" \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGNING_ALLOWED=NO \
+            build
+
           cd ..
-          mkdir -p Payload
-          # Find the generated .app file (the path can vary slightly)
           APP_PATH=$(find ios/build -name "*.app" -type d | head -1)
           if [ -z "$APP_PATH" ]; then
-            echo "Could not find .app file in build directory"
+            echo "❌ No .app found in build output"
+            find ios/build -type d | head -30
             exit 1
           fi
-          
-          mv "$APP_PATH" Payload/
+          echo "✅ Found app at $APP_PATH"
+          mkdir -p Payload
+          cp -r "$APP_PATH" Payload/
           zip -r ar-height-measure.ipa Payload
+          echo "✅ IPA created"
 
-      - name: Upload IPA
+      - name: Upload IPA artifact
         uses: actions/upload-artifact@v4
         with:
           name: iOS-App

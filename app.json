@@ -15,10 +15,8 @@
       "deploymentTarget": "16.4",
       "infoPlist": {
         "NSCameraUsageDescription": "This app uses the camera together with ARKit to track the phone's position in 3D space and measure its height above the floor. No photos or video are recorded or stored.",
-        "UIRequiredDeviceCapabilities": [
-          "arkit",
-          "arkit"
-        ],
+        "NSMotionUsageDescription": "This app uses motion sensors to detect when the phone is held still for accurate height measurement.",
+        "UIRequiredDeviceCapabilities": ["arkit"],
         "ITSAppUsesNonExemptEncryption": false
       }
     },
