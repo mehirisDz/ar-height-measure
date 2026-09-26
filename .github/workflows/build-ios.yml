@@ -26,6 +26,9 @@ jobs:
       - name: Build unsigned IPA
         run: |
           cd ios
+          # Ensure CocoaPods generates the .xcworkspace
+          pod install
+          
           WORKSPACE=$(ls | grep \.xcworkspace | head -1)
           SCHEME=$(basename $(ls | grep \.xcodeproj | head -1) .xcodeproj)
           echo "Building workspace $WORKSPACE with scheme $SCHEME"
