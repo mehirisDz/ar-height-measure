@@ -1,0 +1,33 @@
+{
+  "expo": {
+    "name": "AR Height Measure",
+    "slug": "ar-height-measure",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "automatic",
+    "newArchEnabled": true,
+    "platforms": [
+      "ios"
+    ],
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "com.example.arheightmeasure",
+      "deploymentTarget": "16.0",
+      "infoPlist": {
+        "NSCameraUsageDescription": "This app uses the camera together with ARKit to track the phone's position in 3D space and measure its height above the floor. No photos or video are recorded or stored.",
+        "UIRequiredDeviceCapabilities": [
+          "arkit"
+        ]
+      }
+    },
+    "plugins": [
+      "expo-dev-client"
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "ddec0f9e-27cd-4646-8cf1-e5ef55d09912"
+      }
+    },
+    "owner": "mehiris"
+  }
+}
