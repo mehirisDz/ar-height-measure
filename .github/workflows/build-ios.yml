@@ -1,0 +1,52 @@
+name: Build iOS IPA
+
+on:
+  push:
+    branches: [ "master", "main" ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: macos-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Run Expo Prebuild
+        run: npx expo prebuild --platform ios
+
+      - name: Build unsigned IPA
+        run: |
+          cd ios
+          WORKSPACE=$(ls | grep \.xcworkspace | head -1)
+          SCHEME=$(basename $(ls | grep \.xcodeproj | head -1) .xcodeproj)
+          echo "Building workspace $WORKSPACE with scheme $SCHEME"
+          
+          xcodebuild -workspace "$WORKSPACE" \
+                     -scheme "$SCHEME" \
+                     -configuration Release \
+                     -sdk iphoneos \
+                     -derivedDataPath build \
+                     CODE_SIGN_IDENTITY="" \
+                     CODE_SIGNING_REQUIRED=NO \
+                     CODE_SIGNING_ALLOWED=NO \
+                     build
+          
+          cd ..
+          mkdir -p Payload
+          mv ios/build/Build/Products/Release-iphoneos/*.app Payload/
+          zip -r ar-height-measure.ipa Payload
+
+      - name: Upload IPA
+        uses: actions/upload-artifact@v4
+        with:
+          name: iOS-App
+          path: ar-height-measure.ipa
